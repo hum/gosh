@@ -13,7 +13,7 @@ type RunningProcess struct {
 	Path string
 }
 
-var runningProcesses []RunningProcess
+var RunningProcesses []RunningProcess
 
 func HandleExecutable(cmd string, args []string) (pid int, err error) {
 	var bin string = cmd
@@ -45,18 +45,21 @@ func HandleExecutable(cmd string, args []string) (pid int, err error) {
 		Pid:  pid,
 		Path: cmd,
 	}
-	runningProcesses = append(runningProcesses, rp)
+	RunningProcesses = append(RunningProcesses, rp)
 	return
 }
 
 func KillChildren() error {
-	for _, c := range runningProcesses {
-		err := syscall.Kill(c.Pid, syscall.SIGTERM)
+	for _, c := range RunningProcesses {
+		err := syscall.Kill(c.Pid, syscall.SIGINT)
 		if err != nil {
+			// TODO: handle
 			fmt.Printf("could not kill process pid(%d), got error: %s\n", c.Pid, err)
 			continue
 		}
 	}
+	// Clear the child process stack
+	RunningProcesses = []RunningProcess{}
 	return nil
 }
 

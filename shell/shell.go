@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/hum/gosh/shell/env"
 	"github.com/hum/gosh/shell/exec"
@@ -78,23 +79,29 @@ func prepareSignalChan() {
 		syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT,
-		syscall.SIGKILL,
 	)
-
 	go handleSignal(sig)
 }
 
 func handleSignal(ch <-chan os.Signal) {
-	var s os.Signal = <-ch
-	fmt.Printf("received %v signal\n", s)
-
-	fmt.Println("stopping shell")
-	stop()
+	for {
+		select {
+		case <-ch:
+			if len(process.RunningProcesses) > 0 {
+				process.KillChildren()
+				continue
+			}
+			stop()
+		default:
+			// Ad-hoc sleep limit
+			// maybe remove later
+			time.Sleep(time.Millisecond * 200)
+			continue
+		}
+	}
 }
 
 func stop() {
+	fmt.Println("stopping the gosh shell")
 	running = false
-
-	fmt.Println("stopping child processes")
-	process.KillChildren()
 }
