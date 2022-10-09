@@ -11,8 +11,8 @@ import (
 )
 
 func Echo(w *bufio.Writer, in []string) error {
-	fmt.Println(strings.Join(in, " "))
-	return nil
+	w.WriteString(strings.Join(in, " "))
+	return w.Flush()
 }
 
 func Ls(w *bufio.Writer, in []string) error {
@@ -51,13 +51,15 @@ func Env(w *bufio.Writer, in []string) error {
 	for _, env := range syscall.Environ() {
 		w.WriteString(fmt.Sprintf("%s\n", env))
 	}
-	w.Flush()
-	return nil
+	return w.Flush()
 }
 
 func Exit(w *bufio.Writer, in []string) error {
 	w.WriteString("Exiting gosh shell")
-	w.Flush()
+	err := w.Flush()
+	if err != nil {
+		return err
+	}
 	os.Exit(0)
 	return nil
 }

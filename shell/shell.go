@@ -41,7 +41,12 @@ func Execute() error {
 	}
 
 	for running {
-		fmt.Print(LINE_PREFIX)
+		w.WriteString(LINE_PREFIX)
+		err := w.Flush()
+		if err != nil {
+			return err
+		}
+
 		s, err := r.ReadString(NEW_LINE_DELIMITER)
 		if err != nil {
 			panic(err)
@@ -57,13 +62,15 @@ func Execute() error {
 		if f, ok := builtinCmd[cmd]; ok {
 			// If the command invocation is a builtin command
 			if err = f(w, argv); err != nil {
-				fmt.Printf("gosh: %s\n", err)
+				w.WriteString(fmt.Sprintf("gosh: %s\n", err))
+				w.Flush()
 				continue
 			}
 		} else {
 			_, err := process.HandleExecutable(cmd, argv)
 			if err != nil {
-				fmt.Printf("gosh: %s\n", err)
+				w.WriteString(fmt.Sprintf("gosh: %s\n", err))
+				w.Flush()
 				continue
 			}
 		}
@@ -102,6 +109,7 @@ func handleSignal(ch <-chan os.Signal) {
 }
 
 func stop() {
-	fmt.Println("stopping the gosh shell")
+	w.WriteString("stopping the gosh shell")
+	w.Flush()
 	running = false
 }
