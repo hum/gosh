@@ -6,6 +6,13 @@ import (
 	"syscall"
 )
 
+type RunningProcess struct {
+	Pid  int
+	Path string
+}
+
+var runningProcesses []RunningProcess
+
 func HandleExecutable(cmd string, args []string) (pid int, err error) {
 	fi, err := os.Stat(cmd)
 	if err != nil {
@@ -19,7 +26,28 @@ func HandleExecutable(cmd string, args []string) (pid int, err error) {
 	if !fileIsExecutable(fi.Mode()) {
 		return 0, fmt.Errorf("not an executable: %s", cmd)
 	}
-	return forkProcess(cmd, args)
+	pid, err = forkProcess(cmd, args)
+	if err != nil {
+		return 0, fmt.Errorf("could not fork child process, got error: %s", err)
+	}
+
+	rp := RunningProcess{
+		Pid:  pid,
+		Path: cmd,
+	}
+	runningProcesses = append(runningProcesses, rp)
+	return
+}
+
+func KillChildren() error {
+	for _, c := range runningProcesses {
+		err := syscall.Kill(c.Pid, syscall.SIGTERM)
+		if err != nil {
+			fmt.Printf("could not kill process pid(%d), got error: %s\n", c.Pid, err)
+			continue
+		}
+	}
+	return nil
 }
 
 func forkProcess(proc string, args []string) (pid int, err error) {

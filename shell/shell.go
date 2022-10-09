@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/hum/gosh/shell/lexer"
 	"github.com/hum/gosh/shell/process"
@@ -23,8 +25,12 @@ const (
 	LINE_PREFIX = "> "
 )
 
+var running bool = true
+
 func Execute() error {
-	for {
+	prepareSignalChan()
+
+	for running {
 		fmt.Print(LINE_PREFIX)
 		s, err := r.ReadString(NEW_LINE_DELIMITER)
 		if err != nil {
@@ -52,4 +58,34 @@ func Execute() error {
 			}
 		}
 	}
+	return nil
+}
+
+func prepareSignalChan() {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(
+		sig,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+		syscall.SIGKILL,
+	)
+
+	go handleSignal(sig)
+}
+
+func handleSignal(ch <-chan os.Signal) {
+	var s os.Signal = <-ch
+	fmt.Printf("received %v signal\n", s)
+
+	fmt.Println("stopping shell")
+	stop()
+}
+
+func stop() {
+	running = false
+
+	fmt.Println("stopping child processes")
+	process.KillChildren()
 }
