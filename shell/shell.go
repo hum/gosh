@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/hum/gosh/shell/env"
+	"github.com/hum/gosh/shell/exec"
 	"github.com/hum/gosh/shell/lexer"
 	"github.com/hum/gosh/shell/process"
 )
@@ -29,6 +31,13 @@ var running bool = true
 
 func Execute() error {
 	prepareSignalChan()
+
+	// Load environment variables
+	env.LoadEnv()
+	err := exec.LoadExecutablesFromPath()
+	if err != nil {
+		return err
+	}
 
 	for running {
 		fmt.Print(LINE_PREFIX)

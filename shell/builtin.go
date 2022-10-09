@@ -8,12 +8,14 @@ import (
 
 const (
 	Echo = "echo"
+	Env  = "env"
 	Exit = "exit"
 	Ls   = "ls"
 )
 
 var builtinCmd = map[string]func(w *bufio.Writer, args []string) error{
 	Echo: builtin.Echo,
-	Ls:   builtin.Ls,
+	Env:  builtin.Env,
 	Exit: builtin.Exit,
+	Ls:   builtin.Ls,
 }

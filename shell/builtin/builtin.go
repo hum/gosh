@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
 
 	"github.com/hum/gosh/shell/format"
 )
@@ -43,6 +44,14 @@ func Ls(w *bufio.Writer, in []string) error {
 		}
 		w.Flush()
 	}
+	return nil
+}
+
+func Env(w *bufio.Writer, in []string) error {
+	for _, env := range syscall.Environ() {
+		w.WriteString(fmt.Sprintf("%s\n", env))
+	}
+	w.Flush()
 	return nil
 }
 

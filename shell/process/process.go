@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+
+	"github.com/hum/gosh/shell/exec"
 )
 
 type RunningProcess struct {
@@ -14,19 +16,27 @@ type RunningProcess struct {
 var runningProcesses []RunningProcess
 
 func HandleExecutable(cmd string, args []string) (pid int, err error) {
-	fi, err := os.Stat(cmd)
-	if err != nil {
-		return 0, fmt.Errorf("error stat syscall: %s", err)
+	var bin string = cmd
+
+	v, ok := exec.Executables[bin]
+	if ok {
+		bin = v
+	} else {
+		fi, err := os.Stat(cmd)
+		if err != nil {
+			return 0, fmt.Errorf("error stat syscall: %s", err)
+		}
+
+		if fi.IsDir() {
+			return 0, fmt.Errorf("cannot execute a directory: %s", cmd)
+		}
+
+		if !fileIsExecutable(fi.Mode()) {
+			return 0, fmt.Errorf("not an executable: %s", cmd)
+		}
 	}
 
-	if fi.IsDir() {
-		return 0, fmt.Errorf("cannot execute a directory: %s", cmd)
-	}
-
-	if !fileIsExecutable(fi.Mode()) {
-		return 0, fmt.Errorf("not an executable: %s", cmd)
-	}
-	pid, err = forkProcess(cmd, args)
+	pid, err = forkProcess(bin, args)
 	if err != nil {
 		return 0, fmt.Errorf("could not fork child process, got error: %s", err)
 	}
