@@ -7,15 +7,19 @@ import (
 )
 
 const (
-	Echo = "echo"
-	Env  = "env"
-	Exit = "exit"
-	Ls   = "ls"
+	Cd      = "cd"
+	Echo    = "echo"
+	Env     = "env"
+	Exit    = "exit"
+	History = "history"
+	Ls      = "ls"
 )
 
 var builtinCmd = map[string]func(w *bufio.Writer, args []string) error{
-	Echo: builtin.Echo,
-	Env:  builtin.Env,
-	Exit: builtin.Exit,
-	Ls:   builtin.Ls,
+	Cd:      builtin.Cd,
+	Echo:    builtin.Echo,
+	Env:     builtin.Env,
+	Exit:    builtin.Exit,
+	History: builtin.History,
+	Ls:      builtin.Ls,
 }
