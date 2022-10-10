@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/hum/gosh/shell/exec"
 	"github.com/hum/gosh/shell/lexer"
 	"github.com/hum/gosh/shell/process"
+	"github.com/hum/gosh/shell/runtime"
 )
 
 var (
@@ -41,7 +43,7 @@ func Execute() error {
 	}
 
 	for running {
-		w.WriteString(LINE_PREFIX)
+		w.WriteString(fmt.Sprintf("%s :: %s > ", runtime.Username, runtime.CurrentPath))
 		err := w.Flush()
 		if err != nil {
 			return err
@@ -49,12 +51,19 @@ func Execute() error {
 
 		s, err := r.ReadString(NEW_LINE_DELIMITER)
 		if err != nil {
-			panic(err)
+			return err
 		}
+
+		// Remove newline
+		s = strings.TrimSuffix(s, "\n")
+
+		// Split input line into the executable command and its arguments
 		cmd, argv, err := lexer.Process(s)
 		if err != nil {
 			return fmt.Errorf("unable to parse the line, got error: %s", err)
 		}
+
+		// Happens when enter is pressed
 		if cmd == "" {
 			continue
 		}
