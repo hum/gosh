@@ -15,7 +15,6 @@ import (
 func Cd(w *bufio.Writer, in []string) error {
 	if len(in) == 0 {
 		// Go to root
-		w.WriteString(fmt.Sprintf("changing path to: %s\n", runtime.RootPath))
 		runtime.CurrentPath = runtime.RootPath
 		return nil
 	}
@@ -24,26 +23,36 @@ func Cd(w *bufio.Writer, in []string) error {
 		return errors.New("too many arguments")
 	}
 
-	// Build the path
-	var arg string = runtime.RootPath + "/" + in[0]
+	var dest string = in[0]
+
+	if dest == "." {
+		// ChangeDir to current folder, no action necessary
+		return nil
+	}
+
+	// Build path string
+	var fullPath string
+	if dest == ".." {
+		// Pop the last folder from the current location
+		index := strings.LastIndex(runtime.CurrentPath, "/")
+		fullPath = runtime.CurrentPath[:index]
+	} else {
+		// Push new dest folder into the current path
+		fullPath = runtime.CurrentPath + "/" + dest
+	}
 
 	// Assert the location exists
-	fi, err := os.Stat(arg)
+	fi, err := os.Stat(fullPath)
 	if err != nil {
-		return errors.New(fmt.Sprintf("could not open location: %s", arg))
+		return errors.New(fmt.Sprintf("could not open location: %s", fullPath))
 	}
 
 	// Assert the location is a directory
 	if !fi.IsDir() {
-		return errors.New(fmt.Sprintf("location: %s is not a directory", arg))
+		return errors.New(fmt.Sprintf("location: %s is not a directory", fullPath))
 	}
 
-	w.WriteString(fmt.Sprintf("changing path to: %s\n", arg))
-	w.Flush()
-
-	// TODO: Handle case for parent directory
-	// currently this goes to $HOME parent directory
-	runtime.CurrentPath = arg
+	runtime.CurrentPath = fullPath
 	return nil
 }
 

@@ -43,7 +43,9 @@ func Execute() error {
 	}
 
 	for running {
-		w.WriteString(fmt.Sprintf("%s :: %s > ", runtime.Username, runtime.CurrentPath))
+		currPath := strings.Replace(runtime.CurrentPath, runtime.RootPath, "~", 1)
+		prefix := fmt.Sprintf("%s :: %s > ", runtime.Username, currPath)
+		w.WriteString(prefix)
 		err := w.Flush()
 		if err != nil {
 			return err
